@@ -19,7 +19,7 @@ public class Spawner : MonoBehaviour
         createFunc: () => Instantiate(_prefab),
         actionOnGet: (obj) => ActionOnGet(obj),
         actionOnRelease: (obj) => obj.SetActive(false),
-        actionOnDestroy: (obj) => ActionOnDestroy(obj),
+        actionOnDestroy: (obj) => Destroy(obj),
         collectionCheck: true,
         defaultCapacity: _poolCapacity,
         maxSize: _poolMaxSize);
@@ -30,8 +30,8 @@ public class Spawner : MonoBehaviour
         obj.transform.position = new Vector3(Random.Range(_minPositionCoordinate, _maxPositionCoordinate), 
                                             _spawnHeight, 
                                             Random.Range(_minPositionCoordinate, _maxPositionCoordinate));
-        obj.transform.rotation = Quaternion.Euler(0, 0, 0);
         obj.GetComponent<Renderer>().material.color = Color.white;
+        obj.transform.rotation = Quaternion.Euler(Vector3.zero);
         obj.GetComponent<Rigidbody>().velocity = Vector3.zero;
         obj.SetActive(true);
     }
@@ -49,13 +49,8 @@ public class Spawner : MonoBehaviour
     }
 
     private void ReleaseObject(GameObject obj)
-    {        
-        _pool.Release(obj);
-    }
-
-    private void ActionOnDestroy(GameObject obj)
     {
-        obj.GetComponent<Cube>().DestroyCube -= ReleaseObject;
-        Destroy(obj);
+        obj.GetComponent<Cube>().DestroyCube -= ReleaseObject;        
+        _pool.Release(obj);
     }
 }
