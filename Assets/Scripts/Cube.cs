@@ -1,41 +1,60 @@
+using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
-
+[RequireComponent(typeof(ColorChanger))]
+[RequireComponent(typeof(Rigidbody))]
 public class Cube : MonoBehaviour
 {
-    private Renderer _renderer;
+    private ColorChanger _colorChanger;
     private bool _isCollidedWithPlain;
     private int _minDestroyDelay = 2;
     private int _maxDestroyDelay = 4;
+    private int _minPositionCoordinate = -5;
+    private int _maxPositionCoordinate = 5;
+    private int _spawnHeight = 9;
 
-    public event UnityAction<GameObject> DestroyCube;
+    public event Action<Cube> DestroyCube;
+
+    private void Awake()
+    {
+        _colorChanger = GetComponent<ColorChanger>();
+    }
 
     private void OnEnable()
     {
-        _renderer = GetComponent<Renderer>();
         _isCollidedWithPlain = false;
+
+        transform.position = new Vector3(UnityEngine.Random.Range(_minPositionCoordinate, _maxPositionCoordinate),
+                                    _spawnHeight,
+                                    UnityEngine.Random.Range(_minPositionCoordinate, _maxPositionCoordinate));
+        transform.rotation = Quaternion.Euler(Vector3.zero);
+
+        this.GetComponent<Rigidbody>().velocity = Vector3.zero;
+        this.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
+    }
+
+    private void OnDisable()
+    {
+        StopCoroutine(InvokeDestroyEvent());
     }
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (_isCollidedWithPlain == false && collision.gameObject.tag == "Plain")
+        if (_isCollidedWithPlain == false && collision.gameObject.TryGetComponent(out Plane plane))
         {
             _isCollidedWithPlain = true;
-            SetColor();
+            _colorChanger.SetColor();
 
-            Invoke(nameof(InvokeDestroyEvent), Random.Range(_minDestroyDelay, _maxDestroyDelay + 1));
+            StartCoroutine(InvokeDestroyEvent());            
         }
     }
-    private void SetColor()
-    {
-        Color randomColor = Random.ColorHSV();
 
-        _renderer.material.color = randomColor;
-    }
-
-    private void InvokeDestroyEvent()
+    private IEnumerator InvokeDestroyEvent()
     {
-        DestroyCube?.Invoke(this.gameObject);
+        var wait = new WaitForSeconds(UnityEngine.Random.Range(_minDestroyDelay, _maxDestroyDelay + 1));
+        yield return wait;
+        DestroyCube?.Invoke(this);
     }
 }

@@ -1,56 +1,61 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Pool;
 
 public class Spawner : MonoBehaviour
 {
-    [SerializeField] private GameObject _prefab;
+    [SerializeField] private Cube _prefab;
     [SerializeField] private float _repeatRate = 1f;
     [SerializeField] private int _poolCapacity = 5;
     [SerializeField] private int _poolMaxSize = 5;
 
-    private ObjectPool<GameObject> _pool;
-    private int _minPositionCoordinate = -5;
-    private int _maxPositionCoordinate = 5;
-    private int _spawnHeight = 9;
+    private ObjectPool<Cube> _pool;
+    private bool _isActive = true;
 
     private void Awake()
     {
-        _pool = new ObjectPool<GameObject>(
-        createFunc: () => Instantiate(_prefab),
-        actionOnGet: (obj) => ActionOnGet(obj),
-        actionOnRelease: (obj) => obj.SetActive(false),
-        actionOnDestroy: (obj) => Destroy(obj),
-        collectionCheck: true,
-        defaultCapacity: _poolCapacity,
-        maxSize: _poolMaxSize);
-    }
-
-    private void ActionOnGet(GameObject obj)
-    {
-        obj.transform.position = new Vector3(Random.Range(_minPositionCoordinate, _maxPositionCoordinate), 
-                                            _spawnHeight, 
-                                            Random.Range(_minPositionCoordinate, _maxPositionCoordinate));
-        obj.GetComponent<Renderer>().material.color = Color.white;
-        obj.transform.rotation = Quaternion.Euler(Vector3.zero);
-        obj.GetComponent<Rigidbody>().velocity = Vector3.zero;
-        obj.SetActive(true);
+        _pool = new ObjectPool<Cube>(
+            createFunc: () => Instantiate(_prefab),
+            actionOnGet: (obj) => obj.gameObject.SetActive(true),
+            actionOnRelease: (obj) => ReleaseObjectAction(obj),
+            actionOnDestroy: (obj) => Destroy(obj.gameObject),
+            collectionCheck: true,
+            defaultCapacity: _poolCapacity,
+            maxSize: _poolMaxSize);
     }
 
     private void Start()
     {
-        InvokeRepeating(nameof(GetCube), 0.0f, _repeatRate);
+        StartCoroutine(GetCube());
     }
 
-    private void GetCube()
+    private void OnDisable()
     {
-        GameObject obj = _pool.Get();
-
-        obj.GetComponent<Cube>().DestroyCube += ReleaseObject;
+        StopCoroutine(GetCube());
+        _isActive = false;
     }
 
-    private void ReleaseObject(GameObject obj)
+    private IEnumerator GetCube()
     {
-        obj.GetComponent<Cube>().DestroyCube -= ReleaseObject;        
+        while (_isActive)
+        {
+            var wait = new WaitForSeconds(_repeatRate);
+            Cube obj = _pool.Get();
+
+            obj.DestroyCube += ReleaseObject;
+
+            yield return wait;
+        }
+    }
+
+    private void ReleaseObject(Cube obj)
+    {
+        obj.DestroyCube -= ReleaseObject;
         _pool.Release(obj);
+    }
+
+    private void ReleaseObjectAction(Cube obj)
+    {
+        obj.gameObject.SetActive(false);
     }
 }
