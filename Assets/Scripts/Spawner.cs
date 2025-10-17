@@ -18,7 +18,7 @@ public class Spawner : MonoBehaviour
         _pool = new ObjectPool<GameObject>(
         createFunc: () => Instantiate(_prefab),
         actionOnGet: (obj) => ActionOnGet(obj),
-        actionOnRelease: (obj) => ActionOnRelease(obj),
+        actionOnRelease: (obj) => obj.SetActive(false),
         actionOnDestroy: (obj) => ActionOnDestroy(obj),
         collectionCheck: true,
         defaultCapacity: _poolCapacity,
@@ -51,10 +51,6 @@ public class Spawner : MonoBehaviour
     private void ReleaseObject(GameObject obj)
     {        
         _pool.Release(obj);
-    }
-    private void ActionOnRelease(GameObject obj)
-    {
-        obj.SetActive(false);
     }
 
     private void ActionOnDestroy(GameObject obj)
