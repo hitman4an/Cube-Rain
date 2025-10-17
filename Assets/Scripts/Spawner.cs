@@ -11,12 +11,15 @@ public class Spawner : MonoBehaviour
 
     private ObjectPool<Cube> _pool;
     private bool _isActive = true;
+    private int _minPositionCoordinate = -5;
+    private int _maxPositionCoordinate = 5;
+    private int _spawnHeight = 9;
 
     private void Awake()
     {
         _pool = new ObjectPool<Cube>(
             createFunc: () => Instantiate(_prefab),
-            actionOnGet: (obj) => obj.gameObject.SetActive(true),
+            actionOnGet: (obj) => ClearObjectTransform(obj),
             actionOnRelease: (obj) => ReleaseObjectAction(obj),
             actionOnDestroy: (obj) => Destroy(obj.gameObject),
             collectionCheck: true,
@@ -33,6 +36,14 @@ public class Spawner : MonoBehaviour
     {
         StopCoroutine(GetCube());
         _isActive = false;
+    }
+
+    private void ClearObjectTransform(Cube obj)
+    {
+        obj.transform.position = new Vector3(Random.Range(_minPositionCoordinate, _maxPositionCoordinate),
+                                        _spawnHeight,
+                                        Random.Range(_minPositionCoordinate, _maxPositionCoordinate));
+        obj.gameObject.SetActive(true);
     }
 
     private IEnumerator GetCube()

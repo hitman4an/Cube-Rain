@@ -8,36 +8,31 @@ using UnityEngine.Events;
 public class Cube : MonoBehaviour
 {
     private ColorChanger _colorChanger;
+    private Rigidbody _rigidBody;
     private bool _isCollidedWithPlain;
     private int _minDestroyDelay = 2;
     private int _maxDestroyDelay = 4;
-    private int _minPositionCoordinate = -5;
-    private int _maxPositionCoordinate = 5;
-    private int _spawnHeight = 9;
+    private Coroutine _coroutine;
 
     public event Action<Cube> DestroyCube;
 
     private void Awake()
     {
         _colorChanger = GetComponent<ColorChanger>();
+        _rigidBody = GetComponent<Rigidbody>();
     }
 
     private void OnEnable()
     {
         _isCollidedWithPlain = false;
-
-        transform.position = new Vector3(UnityEngine.Random.Range(_minPositionCoordinate, _maxPositionCoordinate),
-                                    _spawnHeight,
-                                    UnityEngine.Random.Range(_minPositionCoordinate, _maxPositionCoordinate));
+        _rigidBody.velocity = Vector3.zero;
+        _rigidBody.angularVelocity = Vector3.zero;
         transform.rotation = Quaternion.Euler(Vector3.zero);
-
-        this.GetComponent<Rigidbody>().velocity = Vector3.zero;
-        this.GetComponent<Rigidbody>().angularVelocity = Vector3.zero;
     }
 
     private void OnDisable()
     {
-        StopCoroutine(InvokeDestroyEvent());
+        StopCoroutine(_coroutine);
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -47,7 +42,7 @@ public class Cube : MonoBehaviour
             _isCollidedWithPlain = true;
             _colorChanger.SetColor();
 
-            StartCoroutine(InvokeDestroyEvent());            
+            _coroutine = StartCoroutine(InvokeDestroyEvent());            
         }
     }
 
