@@ -1,6 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
-using System.Threading;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -14,7 +11,7 @@ public class Spawner : MonoBehaviour
     private ObjectPool<GameObject> _pool;
     private int _minPositionCoordinate = -5;
     private int _maxPositionCoordinate = 5;
-    private int _spawnHeight;
+    private int _spawnHeight = 9;
 
     private void Awake()
     {
@@ -47,6 +44,7 @@ public class Spawner : MonoBehaviour
     private void GetCube()
     {
         GameObject obj = _pool.Get();
+
         obj.GetComponent<Cube>().DestroyCube += ReleaseObject;
     }
 
