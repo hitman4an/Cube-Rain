@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -9,6 +10,10 @@ public class Spawner : MonoBehaviour
     [SerializeField] private int _poolCapacity = 5;
     [SerializeField] private int _poolMaxSize = 5;
 
+    public event Action ObjectCreated;
+    public event Action ObjectReceived;
+    public event Action ObjectReleased;
+
     private ObjectPool<Cube> _pool;
     private bool _isActive = true;
     private int _minPositionCoordinate = -5;
@@ -18,7 +23,7 @@ public class Spawner : MonoBehaviour
     private void Awake()
     {
         _pool = new ObjectPool<Cube>(
-            createFunc: () => Instantiate(_prefab),
+            createFunc: () => CreateObject(_prefab),
             actionOnGet: (obj) => ClearObjectTransform(obj),
             actionOnRelease: (obj) => ReleaseObjectAction(obj),
             actionOnDestroy: (obj) => Destroy(obj.gameObject),
@@ -29,24 +34,34 @@ public class Spawner : MonoBehaviour
 
     private void Start()
     {
-        StartCoroutine(GetCube());
+        StartCoroutine(GetObject());
     }
 
     private void OnDisable()
     {
-        StopCoroutine(GetCube());
+        StopCoroutine(GetObject());
         _isActive = false;
+    }
+
+    private Cube CreateObject(Cube prefab)
+    {
+        Cube obj = Instantiate(prefab);
+
+        ObjectCreated?.Invoke();
+
+        return obj;
+
     }
 
     private void ClearObjectTransform(Cube obj)
     {
-        obj.transform.position = new Vector3(Random.Range(_minPositionCoordinate, _maxPositionCoordinate),
+        obj.transform.position = new Vector3(UnityEngine.Random.Range(_minPositionCoordinate, _maxPositionCoordinate),
                                         _spawnHeight,
-                                        Random.Range(_minPositionCoordinate, _maxPositionCoordinate));
+                                        UnityEngine.Random.Range(_minPositionCoordinate, _maxPositionCoordinate));
         obj.gameObject.SetActive(true);
     }
 
-    private IEnumerator GetCube()
+    private IEnumerator GetObject()
     {
         while (_isActive)
         {
@@ -54,6 +69,8 @@ public class Spawner : MonoBehaviour
             Cube obj = _pool.Get();
 
             obj.DestroyCube += ReleaseObject;
+
+            ObjectReceived?.Invoke();
 
             yield return wait;
         }
@@ -68,5 +85,6 @@ public class Spawner : MonoBehaviour
     private void ReleaseObjectAction(Cube obj)
     {
         obj.gameObject.SetActive(false);
+        ObjectReleased?.Invoke();
     }
 }
