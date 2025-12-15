@@ -12,12 +12,19 @@ public class Spawner<T>: MonoBehaviour where T : MonoBehaviour, IObjectable<T>
     public event Action ObjectReceived;
     public event Action<T> ObjectReleased;
 
-    protected ObjectPool<T> _pool;
-    protected bool _isActive = true;
+    protected ObjectPool<T> Pool;
+    protected bool IsActive = true;
 
-    public void InvokeObjectReceived()
+    private void Awake()
     {
-        ObjectReceived?.Invoke();
+        Pool = new ObjectPool<T>(
+        createFunc: () => CreateObject(_prefab),
+        actionOnGet: (obj) => ClearObjectTransform(obj),
+        actionOnRelease: (obj) => ReleaseObjectAction(obj),
+        actionOnDestroy: (obj) => Destroy(obj.gameObject),
+        collectionCheck: true,
+        defaultCapacity: _poolCapacity,
+        maxSize: _poolMaxSize);
     }
 
     protected T CreateObject(T prefab)
@@ -29,6 +36,12 @@ public class Spawner<T>: MonoBehaviour where T : MonoBehaviour, IObjectable<T>
         return obj;
 
     }
+
+    protected virtual void ClearObjectTransform(T obj)
+    {
+        ObjectReceived?.Invoke();
+    }
+
     protected void ReleaseObjectAction(T obj)
     {
         obj.gameObject.SetActive(false);
@@ -38,6 +51,6 @@ public class Spawner<T>: MonoBehaviour where T : MonoBehaviour, IObjectable<T>
     protected void ReleaseObject(T obj)
     {
         obj.DestroyFigure -= ReleaseObject;
-        _pool.Release(obj);
+        Pool.Release(obj);
     }
 }

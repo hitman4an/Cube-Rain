@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 using UnityEngine.Pool;
 
@@ -6,11 +5,9 @@ public class BombSpawner : Spawner<Bomb>
 {
     [SerializeField] private Spawner<Cube> _cubeSpawner;
 
-    private Cube _cube = null;
-
     private void Awake()
     {
-        _pool = new ObjectPool<Bomb>(
+        Pool = new ObjectPool<Bomb>(
             createFunc: () => CreateObject(_prefab),
             actionOnGet: (obj) => ClearObjectTransform(obj),
             actionOnRelease: (obj) => ReleaseObjectAction(obj),
@@ -22,25 +19,20 @@ public class BombSpawner : Spawner<Bomb>
 
     private void OnEnable()
     {
-        _cubeSpawner.ObjectReleased += GetObject;
+        _cubeSpawner.ObjectReleased += TakeObjectFromPool;
     }
 
-    private void ClearObjectTransform(Bomb obj)
+    private void OnDisable()
     {
-        if (_cube != null)
-        {
-            obj.transform.position = _cube.transform.position;
-            _cube = null;
-            obj.gameObject.SetActive(true);
-        }
+        _cubeSpawner.ObjectReleased -= TakeObjectFromPool;
     }
 
-    private void GetObject(Cube cube)
+    private void TakeObjectFromPool(Cube cube)
     {
-        Bomb obj = _pool.Get();
-
-        _cube = cube;
+        Bomb obj = Pool.Get();
+        
+        obj.transform.position = cube.transform.position;
+        obj.gameObject.SetActive(true);
         obj.DestroyFigure += ReleaseObject;
-        InvokeObjectReceived();
     }
 }
