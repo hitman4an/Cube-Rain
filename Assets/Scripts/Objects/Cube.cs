@@ -1,20 +1,20 @@
 using System;
 using System.Collections;
 using UnityEngine;
-using UnityEngine.Events;
 
 [RequireComponent(typeof(ColorChanger))]
 [RequireComponent(typeof(Rigidbody))]
-public class Cube : MonoBehaviour
+public class Cube: MonoBehaviour, IObjectable<Cube>
 {
+    public event Action<Cube> DestroyFigure;
+
     private ColorChanger _colorChanger;
     private Rigidbody _rigidBody;
-    private bool _isCollidedWithPlain;
-    private int _minDestroyDelay = 2;
-    private int _maxDestroyDelay = 4;
     private Coroutine _coroutine;
 
-    public event Action<Cube> DestroyCube;
+    private int _minDestroyDelay = 2;
+    private int _maxDestroyDelay = 4;
+    private bool _isCollidedWithPlain;
 
     private void Awake()
     {
@@ -32,7 +32,8 @@ public class Cube : MonoBehaviour
 
     private void OnDisable()
     {
-        StopCoroutine(_coroutine);
+        if (_coroutine != null)
+            StopCoroutine(_coroutine);
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -49,7 +50,9 @@ public class Cube : MonoBehaviour
     private IEnumerator InvokeDestroyEvent()
     {
         var wait = new WaitForSeconds(UnityEngine.Random.Range(_minDestroyDelay, _maxDestroyDelay + 1));
+
         yield return wait;
-        DestroyCube?.Invoke(this);
+
+        DestroyFigure?.Invoke(this);
     }
 }

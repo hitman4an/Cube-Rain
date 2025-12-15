@@ -1,13 +1,15 @@
 using TMPro;
 using UnityEngine;
 
-public class ObjectStats : MonoBehaviour
+[RequireComponent(typeof(TextMeshProUGUI))]
+public class ObjectStats<T> : MonoBehaviour where T: MonoBehaviour, IObjectable<T>
 {
-    [SerializeField] private Spawner _spawner;
+    [SerializeField] protected Spawner<T> _spawner;
 
     private int _objectCreated;
     private int _objectSpawned;
     private int _activeObjects;
+
     private TextMeshProUGUI _text;
 
     private void Awake()
@@ -43,7 +45,7 @@ public class ObjectStats : MonoBehaviour
         UpdateText();
     }
 
-    private void OnObjectReleased()
+    private void OnObjectReleased(T cube)
     {
         _activeObjects--;
         UpdateText();
@@ -53,6 +55,4 @@ public class ObjectStats : MonoBehaviour
     {
         _text.text = $"Количество созданных объектов: {_objectCreated}\nКоличество заспавненных объектов: {_objectSpawned}\nКоличество активных объектов: {_activeObjects}";
     }
-
-
 }
